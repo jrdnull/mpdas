@@ -27,7 +27,7 @@ CAudioScrobbler::CAudioScrobbler()
 }
 
 void
-CAudioScrobbler::OpenURL(std::string url, const char* postfields = 0, char* errbuf = 0)
+CAudioScrobbler::OpenURL(const std::string& url, const char* postfields = 0, const char* errbuf = 0)
 {
 	curl_easy_setopt(_handle, CURLOPT_DNS_CACHE_TIMEOUT, 0);
 	curl_easy_setopt(_handle, CURLOPT_NOPROGRESS, 1);
@@ -41,20 +41,20 @@ CAudioScrobbler::OpenURL(std::string url, const char* postfields = 0, char* errb
 		curl_easy_setopt(_handle, CURLOPT_POST, 0);
 	if(errbuf)
 		curl_easy_setopt(_handle, CURLOPT_ERRORBUFFER, errbuf);
-	
+
 	curl_easy_setopt(_handle, CURLOPT_URL, url.c_str());
 	curl_easy_perform(_handle);
 }
 
 
 void
-CAudioScrobbler::ReportResponse(char* buf, size_t size)
+CAudioScrobbler::ReportResponse(const char* buf, const size_t size)
 {
 	_response.append(buf);
 }
 
-std::string
-CAudioScrobbler::CreateScrobbleMessage(int index, centry_t* entry)
+const std::string
+CAudioScrobbler::CreateScrobbleMessage(const int index, const centry_t* entry)
 {
 	std::ostringstream msg, sigmsg ;
 	std::string artist, title, album, array = "=";
@@ -108,8 +108,8 @@ CAudioScrobbler::Failure()
 	}
 }
 
-bool
-CAudioScrobbler::CheckFailure(std::string response)
+const bool
+CAudioScrobbler::CheckFailure(const std::string& response)
 {
 	bool retval = false;
 
@@ -149,8 +149,8 @@ CAudioScrobbler::CheckFailure(std::string response)
 	return retval;
 }
 
-bool
-CAudioScrobbler::Scrobble(centry_t* entry)
+const bool
+CAudioScrobbler::Scrobble(const centry_t* entry)
 {
 	bool retval = false;
 	if(!_authed) {
@@ -159,7 +159,7 @@ CAudioScrobbler::Scrobble(centry_t* entry)
 		return retval;
 	}
 	iprintf("Scrobbling: %s - %s", entry->artist.c_str(), entry->title.c_str());
-	
+
 	OpenURL(ROOTURL, CreateScrobbleMessage(0, entry).c_str());
 	if(_response.find("<lfm status=\"ok\">") != std::string::npos) {
 		iprintf("%s", "Scrobbled successfully.");
@@ -175,8 +175,8 @@ CAudioScrobbler::Scrobble(centry_t* entry)
 	return retval;
 }
 
-bool
-CAudioScrobbler::SendNowPlaying(mpd_Song* song)
+const bool
+CAudioScrobbler::SendNowPlaying(const mpd_Song* song)
 {
 	bool retval = false;
 	if(!song || !song->artist || !song->title) return retval;

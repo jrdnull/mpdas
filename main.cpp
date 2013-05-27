@@ -59,6 +59,7 @@ printhelp()
 	fprintf(stderr, "\n\th: print this help");
 	fprintf(stderr, "\n\tv: print program version");
 	fprintf(stderr, "\n\tc: load specified config file");
+    fprintf(stderr, "\n\te: load specified excludes file");
 
 	fprintf(stderr, "\n");
 }
@@ -68,6 +69,7 @@ main(int argc, char* argv[])
 {
 	int i;
 	char* config = 0;
+    char* exclude = 0;
 	bool go_daemon = false;
 
 	if(argc >= 2) {
@@ -94,12 +96,21 @@ main(int argc, char* argv[])
 			else if(strstr(argv[i], "-d") == argv[i]) {
 				go_daemon = true;
 			}
+
+            else if(strstr(argv[i], "-e") == argv[i]) {
+                if(i >= argc-1) {
+					fprintf(stderr, "mpdas: excludes path missing!\n");
+					printhelp();
+					return EXIT_FAILURE;
+				}
+				exclude = argv[i+1];
+            }
 		}
 	}
 
 	atexit(onclose);
 
-	Config = new CConfig(config);
+	Config = new CConfig(config,exclude);
 
 	setid(Config->getRUser().c_str());
 

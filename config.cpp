@@ -3,7 +3,7 @@
 CConfig* Config = 0;
 
 void
-CConfig::ParseLine(std::string line)
+CConfig::ParseConfigLine(const std::string& line)
 {
 	std::vector<std::string> tokens;
 	char* pstr = 0;
@@ -35,12 +35,18 @@ CConfig::ParseLine(std::string line)
 			if(tokens[1] == "1" || tokens[1] == "true")
 				_debug = true;
 		}
-
 	}
 }
 
 void
-CConfig::LoadConfig(std::string path)
+CConfig::ParseExcludesLine(const std::string& line)
+{
+    // could be more robust here
+    _excludes.push_back(line);
+}
+
+void
+CConfig::LoadConfig(const std::string& path)
 {
 	std::string line = "";
 
@@ -53,19 +59,55 @@ CConfig::LoadConfig(std::string path)
 
 	while(ifs.good()) {
 		getline(ifs, line);
-		ParseLine(line);
+		ParseConfigLine(line);
 	}
 
 }
 
-CConfig::CConfig(char* cfg)
+void
+CConfig::LoadExcludes(const std::string& path)
+{
+    unsigned int numexcls = 0;    
+    std::string line = "";
+    std::ifstream ifs(path.c_str(), std::ios::in);
+
+	if(!ifs.good()) {
+		iprintf("Excludes file (%s) does not exist or is not readable.", path.c_str());
+		return;
+	}
+
+    while(ifs.good()) {
+		getline(ifs, line);
+		ParseExcludesLine(line);
+        ++numexcls;
+	}
+
+    iprintf("Excluding (%i) artists from scrobbling.", numexcls);
+}
+
+const bool CConfig::IsArtistExcluded(const std::string& artist) const
+{
+    std::vector<std::string>::const_iterator it;
+
+    for(it = _excludes.begin(); it != _excludes.end(); ++it)
+    {
+        if(*it == artist) {
+            iprintf("Excluding artist (%s) from scrobble.", artist.c_str());
+            return true;
+        }
+    }
+
+    return false;
+}
+
+CConfig::CConfig(const char* cfg, const char* excl)
 {
 	/* Set optional settings to default */
 	_mhost = "localhost";
 	_mport = 6600;
 	_debug = false;
 
-	std::string path = "";
+    std::string path = "";
 
 	if(!cfg) {
 		path = CONFDIR;
@@ -75,5 +117,15 @@ CConfig::CConfig(char* cfg)
 		path = cfg;
 	}
 
-	LoadConfig(path);
+    LoadConfig(path);
+
+    if(!excl) {
+		path = CONFDIR;
+		path.append("/mpdasexc");
+	}
+	else {
+		path = excl;
+	}
+
+	LoadExcludes(path);
 }
